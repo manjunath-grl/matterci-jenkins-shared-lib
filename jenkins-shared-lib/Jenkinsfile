@@ -41,7 +41,7 @@ pipeline {
         }
 
         stage('Resolve Build Strategy') {
-            agent { label 'Chip_Mac3' }
+            agent { label 'local_mac_node' }
             steps {
                 script {
                     def ciConfig = readJSON text: env.CI_CONFIG_JSON

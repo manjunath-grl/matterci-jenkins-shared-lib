@@ -20,21 +20,21 @@ ci_config:
     ctrl:
       build_enabled: true
       docker_image: "chip-image"
-      node: "chip-mac3"
+      node: "local_mac_node"
     dut:
       build_enabled: true
       docker_image: "chip-image"
-      node: "chip-mac3"
+      node: "local_mac_node"
 
   copy_build_artifact:
     ctrl:
       enabled: false
-      job_name: "Matter_Backward_Compat"
-      build_number: 120
+      job_name: ""
+      build_number: 1
     dut:
       enabled: false
-      job_name: "Matter_Backward_Compat"
-      build_number: 118
+      job_name: ""
+      build_number: 2
 
   app_to_test: "all-clusters-app"
 
