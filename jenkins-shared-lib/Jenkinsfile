@@ -56,7 +56,7 @@ pipeline {
         }
 
         stage('Clone CTRL SDK') {
-            agent { label "${readJSON(text: env.CI_CONFIG_JSON).ci_config.build_config.ctrl.node}" }
+            agent { label "${readJSON(text: env.CI_CONFIG_JSON).ci_config.raspi_controller_node}" }
             steps {
                 script {
                     def ciConfig = readJSON text: env.CI_CONFIG_JSON
@@ -82,12 +82,12 @@ pipeline {
                 }
             }
             agent {
-                label readJSON(text: env.CI_CONFIG_JSON).ci_config.build_config.ctrl.node
+                label readJSON(text: env.CI_CONFIG_JSON).ci_config.raspi_controller_node
             }
             steps {
                 script {
                     def ciConfig = readJSON text: env.CI_CONFIG_JSON
-                    buildCtrlDocker(ciConfig)
+                    buildCtrl(ciConfig)
                     archiveArtifactsEx("CTRL")
                 }
             }

@@ -35,10 +35,9 @@ def call(ciConfig) {
             source scripts/bootstrap.sh
             source scripts/activate.sh
 
-            ./scripts/examples/gn_build_example.sh \
-            examples/all-clusters-app/linux \
-            out/all-clusters-app \
-            "chip_inet_config_enable_ipv4=false chip_device_config_enable_wifipaf=true"
+            scripts/build/build_examples.py --target linux-arm64-all-clusters-ipv6only build
+            scripts/build/build_examples.py --target linux-arm64-lock-ipv6only build
+            scripts/build/build_examples.py --target linux-arm64-light-ipv6only build
           '
         """
     }
