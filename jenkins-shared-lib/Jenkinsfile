@@ -2,15 +2,16 @@
 
 pipeline {
     agent none
+
     options {
         timestamps()
         disableConcurrentBuilds()
     }
 
     parameters {
-        string(name: 'CTRL_BRANCH', defaultValue: '', description: 'Override CTRL SDK branch')
-        string(name: 'DUT_BRANCH', defaultValue: '', description: 'Override DUT SDK branch')
-        string(name: 'Config_Path', defaultValue: '/Users/mac-mini3/ci_config.yaml', description: 'Config file Path')
+        string(name: 'CTRL_BRANCH', defaultValue: 'v1.5-branch', description: 'Override CTRL SDK branch')
+        string(name: 'DUT_BRANCH',  defaultValue: 'v1.5-branch', description: 'Override DUT SDK branch')
+        string(name: 'Config_Path', defaultValue: '/Users/mac-mini3/ci_config.yaml', description: 'Optional absolute path to ci_config.yaml')
     }
 
     stages {
@@ -19,95 +20,158 @@ pipeline {
             agent { label 'Chip_Mac3' }
             steps {
                 script {
-                    ciConfig = loadCiConfig(params.Config_Path ?: 'ci_config.yaml')
-                    if (params.CTRL_BRANCH) ciConfig.ci_config.ctrl_sdk.branch = params.CTRL_BRANCH
-                    if (params.DUT_BRANCH)  ciConfig.ci_config.dut_sdk.branch  = params.DUT_BRANCH
+                    def configPath = params.Config_Path?.trim()
+                            ? params.Config_Path
+                            : 'resources/ci_config.yaml'
+
+                    def ciConfig = loadCiConfig(configPath)
+
+                    /* Override via Jenkins parameters */
+                    if (params.CTRL_BRANCH?.trim()) {
+                        ciConfig.ci_config.ctrl_sdk.branch = params.CTRL_BRANCH
+                    }
+                    if (params.DUT_BRANCH?.trim()) {
+                        ciConfig.ci_config.dut_sdk.branch = params.DUT_BRANCH
+                    }
+
+                    /* Make available to later stages */
+                    env.CI_CONFIG_JSON = groovy.json.JsonOutput.toJson(ciConfig)
                 }
             }
         }
 
         stage('Resolve Build Strategy') {
+            agent { label 'Chip_Mac3' }
             steps {
                 script {
-                    buildStrategy = resolveBuildStrategy(ciConfig)
+                    def ciConfig = readJSON text: env.CI_CONFIG_JSON
+                    def buildStrategy = resolveBuildStrategy(ciConfig)
+
+                    env.BUILD_STRATEGY_JSON =
+                            groovy.json.JsonOutput.toJson(buildStrategy)
                 }
             }
         }
 
         stage('Clone CTRL SDK') {
-            agent { label ciConfig.ci_config.build_config.ctrl.node }
+            agent { label "${readJSON(text: env.CI_CONFIG_JSON).ci_config.build_config.ctrl.node}" }
             steps {
-                cloneSdk(ciConfig.ci_config.ctrl_sdk, "ctrl_sdk")
+                script {
+                    def ciConfig = readJSON text: env.CI_CONFIG_JSON
+                    cloneSdk(ciConfig.ci_config.ctrl_sdk, "ctrl_sdk")
+                }
             }
         }
 
         stage('Clone DUT SDK') {
-            agent { label ciConfig.ci_config.build_config.dut.node }
+            agent { label "${readJSON(text: env.CI_CONFIG_JSON).ci_config.build_config.dut.node}" }
             steps {
-                cloneSdk(ciConfig.ci_config.dut_sdk, "dut_sdk")
+                script {
+                    def ciConfig = readJSON text: env.CI_CONFIG_JSON
+                    cloneSdk(ciConfig.ci_config.dut_sdk, "dut_sdk")
+                }
             }
         }
 
         stage('Build CTRL (Docker)') {
-            when { expression { buildStrategy.ctrl.build } }
-            agent { label ciConfig.ci_config.build_config.ctrl.node }
+            when {
+                expression {
+                    readJSON(text: env.BUILD_STRATEGY_JSON).ctrl.build
+                }
+            }
+            agent { label "${readJSON(text: env.CI_CONFIG_JSON).ci_config.build_config.ctrl.node}" }
             steps {
-                buildCtrlDocker(ciConfig)
-                archiveArtifactsEx("CTRL")
+                script {
+                    def ciConfig = readJSON text: env.CI_CONFIG_JSON
+                    buildCtrlDocker(ciConfig)
+                    archiveArtifactsEx("CTRL")
+                }
             }
         }
 
         stage('Build DUT (Docker)') {
-            when { expression { buildStrategy.dut.build } }
-            agent { label ciConfig.ci_config.build_config.ctrl.node }
+            when {
+                expression {
+                    readJSON(text: env.BUILD_STRATEGY_JSON).dut.build
+                }
+            }
+            agent { label "${readJSON(text: env.CI_CONFIG_JSON).ci_config.build_config.dut.node}" }
             steps {
-                buildDutDocker(ciConfig)
-                archiveArtifactsEx("DUT")
+                script {
+                    def ciConfig = readJSON text: env.CI_CONFIG_JSON
+                    buildDutDocker(ciConfig)
+                    archiveArtifactsEx("DUT")
+                }
             }
         }
 
         stage('Reuse CTRL Artifacts') {
-            when { expression { !buildStrategy.ctrl.build } }
+            when {
+                expression {
+                    !readJSON(text: env.BUILD_STRATEGY_JSON).ctrl.build
+                }
+            }
             steps {
-                copyArtifactsEx("CTRL", ciConfig)
+                script {
+                    def ciConfig = readJSON text: env.CI_CONFIG_JSON
+                    copyArtifactsEx("CTRL", ciConfig)
+                }
             }
         }
 
         stage('Reuse DUT Artifacts') {
-            when { expression { !buildStrategy.dut.build } }
+            when {
+                expression {
+                    !readJSON(text: env.BUILD_STRATEGY_JSON).dut.build
+                }
+            }
             steps {
-                copyArtifactsEx("DUT", ciConfig)
+                script {
+                    def ciConfig = readJSON text: env.CI_CONFIG_JSON
+                    copyArtifactsEx("DUT", ciConfig)
+                }
             }
         }
 
         stage('Install Binaries') {
             parallel {
                 stage('Install CTRL') {
-                    agent { label ciConfig.ci_config.raspi_controller_node }
-                    steps { installBinaries("CTRL") }
+                    agent { label "${readJSON(text: env.CI_CONFIG_JSON).ci_config.raspi_controller_node}" }
+                    steps {
+                        installBinaries("CTRL")
+                    }
                 }
                 stage('Install DUT') {
-                    agent { label ciConfig.ci_config.raspi_device_node }
-                    steps { installBinaries("DUT") }
+                    agent { label "${readJSON(text: env.CI_CONFIG_JSON).ci_config.raspi_device_node}" }
+                    steps {
+                        installBinaries("DUT")
+                    }
                 }
             }
         }
 
         stage('Run Certification Tests') {
-            when { expression { ciConfig.ci_config.test_run_config.enabled } }
-            agent { label ciConfig.ci_config.raspi_controller_node }
+            when {
+                expression {
+                    readJSON(text: env.CI_CONFIG_JSON).ci_config.test_run_config.enabled
+                }
+            }
+            agent { label "${readJSON(text: env.CI_CONFIG_JSON).ci_config.raspi_controller_node}" }
             steps {
-                runTests(ciConfig.ci_config.test_run_config)
+                script {
+                    def ciConfig = readJSON text: env.CI_CONFIG_JSON
+                    runTests(ciConfig.ci_config.test_run_config)
+                }
             }
         }
     }
 
     post {
         failure {
-            echo "❌ Backward compatibility pipeline failed"
+            echo "❌ Backward compatibility pipeline FAILED"
         }
         success {
-            echo "✅ Backward compatibility pipeline completed successfully"
+            echo "✅ Backward compatibility pipeline completed SUCCESSFULLY"
         }
     }
 }
