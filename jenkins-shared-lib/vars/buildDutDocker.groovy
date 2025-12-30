@@ -35,10 +35,10 @@ def call(ciConfig) {
             source scripts/bootstrap.sh
             source scripts/activate.sh
 
-            ./scripts/examples/gn_build_example.sh \\
-              examples/all-clusters-app/linux \\
-              out/all-clusters-app \\
-              '"'"'chip_inet_config_enable_ipv4=false chip_device_config_enable_wifipaf=true'"'"'
+            ./scripts/examples/gn_build_example.sh \
+            examples/all-clusters-app/linux \
+            out/all-clusters-app \
+            "chip_inet_config_enable_ipv4=false chip_device_config_enable_wifipaf=true"
           '
         """
     }
