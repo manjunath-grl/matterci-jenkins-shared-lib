@@ -11,7 +11,7 @@ def call(ciConfig) {
         echo "Workspace         : ${workSpace}"
 
         sh """
-        cd ${workSpace}/ctrl_sdk
+        cd ctrl_sdk
         ./scripts/pi-setup/auto-install.sh
         """
     }

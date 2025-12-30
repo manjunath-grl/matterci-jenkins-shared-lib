@@ -14,31 +14,25 @@ def call(ciConfig) {
         echo "Workspace        : ${workSpace}"
 
         sh """#!/bin/bash
-        set -euxo pipefail
+        set -ex
 
-        docker run --rm --user root \\
-          --platform=${dockerPlatform} \\
-          -v "${workSpace}/dut_sdk:/home/connectedhome" \\
-          -w /home/connectedhome \\
-          ${dockerImage} \\
-          /bin/bash -c '
-            set -euxo pipefail
-
+        docker run --rm --user root --platform=${dockerPlatform} -v "${workSpace}/dut_sdk:/home/connectedhome" \\
+        -w /home/connectedhome ${dockerImage} \\
+        /bin/bash -c \'
+            set -ex
             git config --global --add safe.directory /home/connectedhome
             git config --global --add safe.directory /home/connectedhome/third_party/pigweed/repo
+            git config --global http.version HTTP/1.1
+            git config --global http.postBuffer 524288000
+            git config --global http.lowSpeedLimit 0
+            git config --global http.lowSpeedTime 999999
 
-            ./scripts/checkout_submodules.py \\
-              --allow-changing-global-git-config \\
-              --shallow \\
-              --platform linux
-
+            ./scripts/checkout_submodules.py --allow-changing-global-git-config --shallow --platform linux
             source scripts/bootstrap.sh
             source scripts/activate.sh
 
             scripts/build/build_examples.py --target linux-arm64-all-clusters-ipv6only build
-            scripts/build/build_examples.py --target linux-arm64-lock-ipv6only build
-            scripts/build/build_examples.py --target linux-arm64-light-ipv6only build
-          '
+          \'
         """
     }
 }
