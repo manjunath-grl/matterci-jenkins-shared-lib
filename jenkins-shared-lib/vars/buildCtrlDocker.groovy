@@ -14,27 +14,31 @@ def call(ciConfig) {
         echo "Workspace           : ${workSpace}"
 
         sh """#!/bin/bash
-        set -ex
+        set -euxo pipefail
 
-        docker run --rm --user root --platform=${dockerPlatform} \
-          -v "${workSpace}/ctrl_sdk:/home/connectedhome" \
-          -w /home/connectedhome \
-          ${dockerImage} \
-          /bin/bash -c "
-            set -ex
+        docker run --rm --user root --platform=${dockerPlatform} \\
+          -v "${workSpace}/ctrl_sdk:/home/connectedhome" \\
+          -w /home/connectedhome \\
+          ${dockerImage} \\
+          /bin/bash -c '
+            set -euxo pipefail
+
             git config --global --add safe.directory /home/connectedhome
             git config --global --add safe.directory /home/connectedhome/third_party/pigweed/repo
 
-            ./scripts/checkout_submodules.py --allow-changing-global-git-config --shallow --platform linux
+            ./scripts/checkout_submodules.py \\
+              --allow-changing-global-git-config \\
+              --shallow \\
+              --platform linux
+
             source scripts/bootstrap.sh
             source scripts/activate.sh
 
-            ./scripts/examples/gn_build_example.sh \
-              examples/chip-tool \
-              out/chip-tool \
-              chip_mdns=platform \
-              chip_inet_config_enable_ipv4=false
-          "
+            ./scripts/examples/gn_build_example.sh \\
+              examples/chip-tool \\
+              out/chip-tool \\
+              "chip_mdns=\\"platform\\" chip_inet_config_enable_ipv4=false"
+          '
         """
     }
 }
