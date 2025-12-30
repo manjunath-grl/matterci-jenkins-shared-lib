@@ -81,7 +81,9 @@ pipeline {
                     readJSON(text: env.BUILD_STRATEGY_JSON).ctrl.build
                 }
             }
-            agent { label "${readJSON(text: env.CI_CONFIG_JSON).ci_config.build_config.ctrl.node}" }
+            agent {
+                label readJSON(text: env.CI_CONFIG_JSON).ci_config.build_config.ctrl.node
+            }
             steps {
                 script {
                     def ciConfig = readJSON text: env.CI_CONFIG_JSON
@@ -97,7 +99,9 @@ pipeline {
                     readJSON(text: env.BUILD_STRATEGY_JSON).dut.build
                 }
             }
-            agent { label "${readJSON(text: env.CI_CONFIG_JSON).ci_config.build_config.dut.node}" }
+            agent {
+                label readJSON(text: env.CI_CONFIG_JSON).ci_config.build_config.dut.node
+            }
             steps {
                 script {
                     def ciConfig = readJSON text: env.CI_CONFIG_JSON

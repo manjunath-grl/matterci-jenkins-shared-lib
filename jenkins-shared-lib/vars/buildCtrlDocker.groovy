@@ -1,7 +1,7 @@
-// vars/buildCtrlDocker.groovy
 def call(ciConfig) {
 
-    def dockerImage = ciConfig.ci_config.build_config.ctrl.docker_image ?: "chip_image:latest"
+    def ctrlCfg     = ciConfig.ci_config.build_config.ctrl
+    def dockerImage = ctrlCfg.docker_image ?: error("CTRL docker_image missing")
     def workSpace   = pwd()
 
     stage('Build CTRL (Docker)') {
@@ -9,19 +9,17 @@ def call(ciConfig) {
         def arch = sh(script: "uname -m", returnStdout: true).trim()
         def dockerPlatform = (arch == "x86_64") ? "linux/amd64" : "linux/arm64"
 
-        echo "CTRL Docker Image   : ${dockerImage}"
-        echo "Docker Platform     : ${dockerPlatform}"
-        echo "Workspace           : ${workSpace}"
+        echo "CTRL Docker Image : ${dockerImage}"
+        echo "Docker Platform   : ${dockerPlatform}"
+        echo "Workspace         : ${workSpace}"
 
-        sh """#!/bin/bash
-        set -euxo pipefail
-
+        sh """
         docker run --rm --user root --platform=${dockerPlatform} \\
           -v "${workSpace}/ctrl_sdk:/home/connectedhome" \\
           -w /home/connectedhome \\
           ${dockerImage} \\
           /bin/bash -c '
-            set -euxo pipefail
+            set -eo pipefail
 
             git config --global --add safe.directory /home/connectedhome
             git config --global --add safe.directory /home/connectedhome/third_party/pigweed/repo
@@ -37,7 +35,8 @@ def call(ciConfig) {
             ./scripts/examples/gn_build_example.sh \\
               examples/chip-tool \\
               out/chip-tool \\
-              "chip_mdns=\\"platform\\" chip_inet_config_enable_ipv4=false"
+              chip_mdns=platform \\
+              chip_inet_config_enable_ipv4=false
           '
         """
     }
