@@ -1,0 +1,112 @@
+@Library('matter-shared-lib') _
+
+pipeline {
+    agent none
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+    }
+
+    parameters {
+        string(name: 'CTRL_BRANCH', defaultValue: '', description: 'Override CTRL SDK branch')
+        string(name: 'DUT_BRANCH', defaultValue: '', description: 'Override DUT SDK branch')
+    }
+
+    stages {
+
+        stage('Load CI Config') {
+            agent { label 'master' }
+            steps {
+                script {
+                    ciConfig = loadCiConfig('ci_config.yaml')
+                    if (params.CTRL_BRANCH) ciConfig.ci_config.ctrl_sdk.branch = params.CTRL_BRANCH
+                    if (params.DUT_BRANCH)  ciConfig.ci_config.dut_sdk.branch  = params.DUT_BRANCH
+                }
+            }
+        }
+
+        stage('Resolve Build Strategy') {
+            steps {
+                script {
+                    buildStrategy = resolveBuildStrategy(ciConfig)
+                }
+            }
+        }
+
+        stage('Clone CTRL SDK') {
+            agent { label ciConfig.ci_config.raspi_controller_node }
+            steps {
+                cloneSdk(ciConfig.ci_config.ctrl_sdk, "ctrl_sdk")
+            }
+        }
+
+        stage('Clone DUT SDK') {
+            agent { label ciConfig.ci_config.raspi_device_node }
+            steps {
+                cloneSdk(ciConfig.ci_config.dut_sdk, "dut_sdk")
+            }
+        }
+
+        stage('Build CTRL (Docker)') {
+            when { expression { buildStrategy.ctrl.build } }
+            agent { label ciConfig.ci_config.raspi_controller_node }
+            steps {
+                buildCtrlDocker(ciConfig)
+                archiveArtifactsEx("CTRL")
+            }
+        }
+
+        stage('Build DUT (Docker)') {
+            when { expression { buildStrategy.dut.build } }
+            agent { label ciConfig.ci_config.raspi_device_node }
+            steps {
+                buildDutDocker(ciConfig)
+                archiveArtifactsEx("DUT")
+            }
+        }
+
+        stage('Reuse CTRL Artifacts') {
+            when { expression { !buildStrategy.ctrl.build } }
+            steps {
+                copyArtifactsEx("CTRL", ciConfig)
+            }
+        }
+
+        stage('Reuse DUT Artifacts') {
+            when { expression { !buildStrategy.dut.build } }
+            steps {
+                copyArtifactsEx("DUT", ciConfig)
+            }
+        }
+
+        stage('Install Binaries') {
+            parallel {
+                stage('Install CTRL') {
+                    agent { label ciConfig.ci_config.raspi_controller_node }
+                    steps { installBinaries("CTRL") }
+                }
+                stage('Install DUT') {
+                    agent { label ciConfig.ci_config.raspi_device_node }
+                    steps { installBinaries("DUT") }
+                }
+            }
+        }
+
+        stage('Run Certification Tests') {
+            when { expression { ciConfig.ci_config.test_run_config.enabled } }
+            agent { label ciConfig.ci_config.raspi_controller_node }
+            steps {
+                runTests(ciConfig.ci_config.test_run_config)
+            }
+        }
+    }
+
+    post {
+        failure {
+            echo "❌ Backward compatibility pipeline failed"
+        }
+        success {
+            echo "✅ Backward compatibility pipeline completed successfully"
+        }
+    }
+}

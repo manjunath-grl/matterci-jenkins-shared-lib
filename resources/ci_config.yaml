@@ -1,0 +1,44 @@
+ci_config:
+  workspace_base: "/mnt/tests"
+
+  raspi_controller_node: "raspi_controller_agent"
+  raspi_device_node: "raspi_device_agent"
+
+  ctrl_sdk:
+    repoUrl: "git@github.com:project-chip/connectedhomeip.git"
+    branch: "v1.5"
+    tag: ""
+    sha: ""
+
+  dut_sdk:
+    repoUrl: "git@github.com:project-chip/connectedhomeip.git"
+    branch: "v1.4"
+    tag: ""
+    sha: ""
+
+  build_config:
+    ctrl:
+      build_enabled: true
+      docker_image: "chip-build:latest"
+    dut:
+      build_enabled: true
+      docker_image: "chip-build:latest"
+
+  copy_build_artifact:
+    ctrl:
+      enabled: false
+      job_name: "Matter_Backward_Compat"
+      build_number: 120
+    dut:
+      enabled: false
+      job_name: "Matter_Backward_Compat"
+      build_number: 118
+
+  app_to_test: "all-clusters-app"
+
+  test_run_config:
+    enabled: true
+    YAML:
+      - TC_ONOFF_3.1.yaml
+    PYTHON:
+      - TC_ONOFF_3.2.py
