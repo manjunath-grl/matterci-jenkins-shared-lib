@@ -1,8 +1,8 @@
 def call(ciConfig) {
 
-    def ctrlCfg     = ciConfig.ci_config.build_config.ctrl
-    def dockerImage = ctrlCfg.docker_image ?: "chip_image"
-    def workSpace   = pwd()
+    def ctrlCfg = ciConfig.ci_config.build_config.ctrl
+    def dockerImage = ctrlCfg.docker_image ?: error("CTRL docker_image missing")
+    def workSpace = pwd()
 
     stage('Build CTRL (Docker)') {
 
@@ -16,12 +16,11 @@ def call(ciConfig) {
         sh """#!/bin/bash
         set -euxo pipefail
 
-        docker run --rm --user root \\
-          --platform=${dockerPlatform} \\
+        docker run --rm --user root --platform=${dockerPlatform} \\
           -v "${workSpace}/ctrl_sdk:/home/connectedhome" \\
           -w /home/connectedhome \\
           ${dockerImage} \\
-          /bin/bash -c '
+          /bin/bash -lc '
             set -euxo pipefail
 
             git config --global --add safe.directory /home/connectedhome
@@ -38,7 +37,7 @@ def call(ciConfig) {
             ./scripts/examples/gn_build_example.sh \\
               examples/chip-tool \\
               out/chip-tool \\
-              '"'"'chip_mdns="platform" chip_inet_config_enable_ipv4=false'"'"'
+              "chip_mdns=\\"platform\\" chip_inet_config_enable_ipv4=false chip_device_config_enable_wifipaf=true"
           '
         """
     }
