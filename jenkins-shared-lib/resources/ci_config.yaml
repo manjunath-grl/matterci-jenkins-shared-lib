@@ -5,16 +5,14 @@ ci_config:
   raspi_device_node: "raspi_device_agent"
 
   ctrl_sdk:
-    repoUrl: "git@github.com:project-chip/connectedhomeip.git"
-    branch: "v1.5-branch"
-    tag: ""
-    sha: ""
+    repoUrl: "git@github.com:project-chip/certification-tool.git"
+    branch: "v2.15-beta1+winter2025"
+    submodules: true
 
   dut_sdk:
     repoUrl: "git@github.com:project-chip/connectedhomeip.git"
     branch: "v1.5-branch"
-    tag: ""
-    sha: ""
+    submodules: true
 
   build_config:
     ctrl:

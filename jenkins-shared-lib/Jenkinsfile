@@ -9,7 +9,7 @@ pipeline {
     }
 
     parameters {
-        string(name: 'CTRL_BRANCH', defaultValue: 'v1.5-branch', description: 'Override CTRL SDK branch')
+        string(name: 'CTRL_BRANCH', defaultValue: 'v2.15-beta1+winter2025', description: 'Override CTRL SDK branch')
         string(name: 'DUT_BRANCH',  defaultValue: 'v1.5-branch', description: 'Override DUT SDK branch')
         string(name: 'Config_Path', defaultValue: '/Users/mac-mini3/ci_config.yaml', description: 'Optional absolute path to ci_config.yaml')
     }
