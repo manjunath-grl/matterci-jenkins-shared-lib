@@ -19,10 +19,12 @@ ci_config:
   build_config:
     ctrl:
       build_enabled: true
-      docker_image: "chip-build:latest"
+      docker_image: "chip-image"
+      node: "chip-mac3"
     dut:
       build_enabled: true
-      docker_image: "chip-build:latest"
+      docker_image: "chip-image"
+      node: "chip-mac3"
 
   copy_build_artifact:
     ctrl:

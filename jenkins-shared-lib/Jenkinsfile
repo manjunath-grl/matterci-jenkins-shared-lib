@@ -35,14 +35,14 @@ pipeline {
         }
 
         stage('Clone CTRL SDK') {
-            agent { label ciConfig.ci_config.raspi_controller_node }
+            agent { label ciConfig.ci_config.build_config.ctrl.node }
             steps {
                 cloneSdk(ciConfig.ci_config.ctrl_sdk, "ctrl_sdk")
             }
         }
 
         stage('Clone DUT SDK') {
-            agent { label ciConfig.ci_config.raspi_device_node }
+            agent { label ciConfig.ci_config.build_config.dut.node }
             steps {
                 cloneSdk(ciConfig.ci_config.dut_sdk, "dut_sdk")
             }
@@ -50,7 +50,7 @@ pipeline {
 
         stage('Build CTRL (Docker)') {
             when { expression { buildStrategy.ctrl.build } }
-            agent { label ciConfig.ci_config.raspi_controller_node }
+            agent { label ciConfig.ci_config.build_config.ctrl.node }
             steps {
                 buildCtrlDocker(ciConfig)
                 archiveArtifactsEx("CTRL")
@@ -59,7 +59,7 @@ pipeline {
 
         stage('Build DUT (Docker)') {
             when { expression { buildStrategy.dut.build } }
-            agent { label ciConfig.ci_config.raspi_device_node }
+            agent { label ciConfig.ci_config.build_config.ctrl.node }
             steps {
                 buildDutDocker(ciConfig)
                 archiveArtifactsEx("DUT")
