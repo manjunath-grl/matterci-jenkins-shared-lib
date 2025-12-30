@@ -45,7 +45,10 @@ pipeline {
             steps {
                 script {
                     def ciConfig = readJSON text: env.CI_CONFIG_JSON
+                    steps.echo("CI Config: ${ciConfig}")
                     def buildStrategy = resolveBuildStrategy(ciConfig)
+                    steps.echo("Build Strategy: ${buildStrategy}")
+                    exit 1
 
                     env.BUILD_STRATEGY_JSON =
                             groovy.json.JsonOutput.toJson(buildStrategy)
