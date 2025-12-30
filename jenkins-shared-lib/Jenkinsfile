@@ -10,6 +10,7 @@ pipeline {
     parameters {
         string(name: 'CTRL_BRANCH', defaultValue: '', description: 'Override CTRL SDK branch')
         string(name: 'DUT_BRANCH', defaultValue: '', description: 'Override DUT SDK branch')
+        string(name: 'Config_Path', defaultValue: '/Users/mac-mini3/ci_config.yaml', description: 'Config file Path')
     }
 
     stages {
@@ -18,7 +19,7 @@ pipeline {
             agent { label 'master' }
             steps {
                 script {
-                    ciConfig = loadCiConfig('ci_config.yaml')
+                    ciConfig = loadCiConfig(params.Config_Path ?: 'ci_config.yaml')
                     if (params.CTRL_BRANCH) ciConfig.ci_config.ctrl_sdk.branch = params.CTRL_BRANCH
                     if (params.DUT_BRANCH)  ciConfig.ci_config.dut_sdk.branch  = params.DUT_BRANCH
                 }
