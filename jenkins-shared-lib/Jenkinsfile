@@ -16,7 +16,7 @@ pipeline {
     stages {
 
         stage('Load CI Config') {
-            agent { label 'master' }
+            agent { label 'Chip_Mac3' }
             steps {
                 script {
                     ciConfig = loadCiConfig(params.Config_Path ?: 'ci_config.yaml')
