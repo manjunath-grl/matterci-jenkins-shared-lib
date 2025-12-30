@@ -75,39 +75,44 @@ pipeline {
             }
         }
 
-        stage('Build CTRL (Docker)') {
-            when {
-                expression {
-                    readJSON(text: env.BUILD_STRATEGY_JSON).ctrl.build
+        stage('BUILD ARTIFACTS') {
+            parallel {
+                stage('Build CTRL') {
+                    when {
+                        expression {
+                            readJSON(text: env.BUILD_STRATEGY_JSON).ctrl.build
+                        }
+                    }
+                    agent {
+                        label readJSON(text: env.CI_CONFIG_JSON).ci_config.raspi_controller_node
+                    }
+                    steps {
+                        script {
+                            def ciConfig = readJSON text: env.CI_CONFIG_JSON
+                            buildCtrl(ciConfig)
+                            archiveArtifactsEx("CTRL")
+                        }
+                    }
                 }
-            }
-            agent {
-                label readJSON(text: env.CI_CONFIG_JSON).ci_config.raspi_controller_node
-            }
-            steps {
-                script {
-                    def ciConfig = readJSON text: env.CI_CONFIG_JSON
-                    buildCtrl(ciConfig)
-                    archiveArtifactsEx("CTRL")
-                }
-            }
-        }
 
-        stage('Build DUT (Docker)') {
-            when {
-                expression {
-                    readJSON(text: env.BUILD_STRATEGY_JSON).dut.build
+                stage('Build DUT (Docker)') {
+                    when {
+                        expression {
+                            readJSON(text: env.BUILD_STRATEGY_JSON).dut.build
+                        }
+                    }
+                    agent {
+                        label readJSON(text: env.CI_CONFIG_JSON).ci_config.build_config.dut.node
+                    }
+                    steps {
+                        script {
+                            def ciConfig = readJSON text: env.CI_CONFIG_JSON
+                            buildDutDocker(ciConfig)
+                            archiveArtifactsEx("DUT")
+                        }
+                    }
                 }
-            }
-            agent {
-                label readJSON(text: env.CI_CONFIG_JSON).ci_config.build_config.dut.node
-            }
-            steps {
-                script {
-                    def ciConfig = readJSON text: env.CI_CONFIG_JSON
-                    buildDutDocker(ciConfig)
-                    archiveArtifactsEx("DUT")
-                }
+
             }
         }
 
