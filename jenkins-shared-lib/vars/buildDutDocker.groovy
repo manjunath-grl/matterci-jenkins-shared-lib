@@ -1,7 +1,7 @@
 def call(ciConfig) {
 
     def dutCfg      = ciConfig.ci_config.build_config.dut
-    def dockerImage = dutCfg.docker_image ?: error("DUT docker_image missing")
+    def dockerImage = dutCfg.docker_image ?: "chip_image"
     def workSpace   = pwd()
 
     stage('Build DUT (Docker)') {
@@ -13,13 +13,16 @@ def call(ciConfig) {
         echo "Docker Platform  : ${dockerPlatform}"
         echo "Workspace        : ${workSpace}"
 
-        sh """
-        docker run --rm --user root --platform=${dockerPlatform} \\
+        sh """#!/bin/bash
+        set -euxo pipefail
+
+        docker run --rm --user root \\
+          --platform=${dockerPlatform} \\
           -v "${workSpace}/dut_sdk:/home/connectedhome" \\
           -w /home/connectedhome \\
           ${dockerImage} \\
           /bin/bash -c '
-            set -eo pipefail
+            set -euxo pipefail
 
             git config --global --add safe.directory /home/connectedhome
             git config --global --add safe.directory /home/connectedhome/third_party/pigweed/repo
@@ -35,8 +38,7 @@ def call(ciConfig) {
             ./scripts/examples/gn_build_example.sh \\
               examples/all-clusters-app/linux \\
               out/all-clusters-app \\
-              chip_inet_config_enable_ipv4=false \\
-              chip_device_config_enable_wifipaf=true
+              '"'"'chip_inet_config_enable_ipv4=false chip_device_config_enable_wifipaf=true'"'"'
           '
         """
     }
