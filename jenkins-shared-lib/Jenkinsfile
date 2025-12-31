@@ -145,17 +145,22 @@ pipeline {
         }
 
         stage('Install Binaries') {
+            when {
+                expression {
+                    readJSON(text: env.BUILD_STRATEGY_JSON).dut.build
+                }
+            }
             parallel {
                 stage('Install CTRL') {
                     agent { label "${readJSON(text: env.CI_CONFIG_JSON).ci_config.raspi_controller_node}" }
                     steps {
-                        installBinaries("CTRL")
+                        copyArtifactsEx("DUT", ciConfig)
                     }
                 }
                 stage('Install DUT') {
                     agent { label "${readJSON(text: env.CI_CONFIG_JSON).ci_config.raspi_device_node}" }
                     steps {
-                        installBinaries("DUT")
+                        copyArtifactsEx("DUT", ciConfig)
                     }
                 }
             }
