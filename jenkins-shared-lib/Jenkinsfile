@@ -125,7 +125,7 @@ pipeline {
             steps {
                 script {
                     def ciConfig = readJSON text: env.CI_CONFIG_JSON
-                    copyArtifactsEx("CTRL", ciConfig)
+                    copyArtifactsEx("ctrl", ciConfig)
                 }
             }
         }
@@ -139,7 +139,7 @@ pipeline {
             steps {
                 script {
                     def ciConfig = readJSON text: env.CI_CONFIG_JSON
-                    copyArtifactsEx("DUT", ciConfig)
+                    copyArtifactsEx("dut", ciConfig)
                 }
             }
         }
@@ -154,15 +154,19 @@ pipeline {
                 stage('Install CTRL') {
                     agent { label "${readJSON(text: env.CI_CONFIG_JSON).ci_config.raspi_controller_node}" }
                     steps {
-                        def ciConfig = readJSON text: env.CI_CONFIG_JSON
-                        copyArtifactsEx("ctrl", ciConfig)
+                        script {
+                            def ciConfig = readJSON text: env.CI_CONFIG_JSON
+                            copyArtifactsEx("ctrl", ciConfig)
+                        }
                     }
                 }
                 stage('Install DUT') {
                     agent { label "${readJSON(text: env.CI_CONFIG_JSON).ci_config.raspi_device_node}" }
                     steps {
-                        def ciConfig = readJSON text: env.CI_CONFIG_JSON
-                        copyArtifactsEx("dut", ciConfig)
+                        script {
+                            def ciConfig = readJSON text: env.CI_CONFIG_JSON
+                            copyArtifactsEx("dut", ciConfig)
+                        }
                     }
                 }
             }
