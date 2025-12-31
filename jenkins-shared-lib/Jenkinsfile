@@ -169,9 +169,9 @@ pipeline {
             }
             agent { label "${readJSON(text: env.CI_CONFIG_JSON).ci_config.raspi_device_node}" }
             steps {
-                steps.echo "Running Apps on DUT"
+                echo "Running Apps on DUT"
                 def workSpace = pwd()
-                steps.echo "Workspace : ${workSpace}"
+                echo "Workspace : ${workSpace}"
                 sh """ ls """
             }
             agent { label "${readJSON(text: env.CI_CONFIG_JSON).ci_config.raspi_controller_node}" }
