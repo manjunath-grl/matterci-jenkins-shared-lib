@@ -17,6 +17,8 @@ def call(ciConfig) {
         #yes 2 | ./scripts/pi-setup/auto-install.sh
 
         chmod +x cli/scripts/th_cli_install.sh
+        pip install poetry
+        export PATH="/root/.local/bin:$PATH"
         ./cli/scripts/th_cli_install.sh
         """
     }
