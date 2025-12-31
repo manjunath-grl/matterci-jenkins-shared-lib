@@ -13,8 +13,11 @@ def call(ciConfig) {
 
         sh """
         cd "ctrl_sdk/"
-        chmod +x scripts/pi-setup/auto-install.sh
-        ./scripts/pi-setup/auto-install.sh
+        #chmod +x scripts/pi-setup/auto-install.sh
+        #yes 2 | ./scripts/pi-setup/auto-install.sh
+
+        chmod +x cli/scripts/th_cli_install.sh
+        ./cli/scripts/th_cli_install.sh
         """
     }
 }
