@@ -16,7 +16,7 @@ def call(type, cfg) {
 
     if (cfgBlock.enabled) {
         projectName = cfgBlock.job_name
-        selector = specific(cfgBlock.build_number as String)
+        selector = specific(cfgBlock.build_number)
 
         echo "Overriding project name to: ${projectName}"
         echo "Overriding build number to: ${cfgBlock.build_number}"

@@ -122,6 +122,7 @@ pipeline {
                     !readJSON(text: env.BUILD_STRATEGY_JSON).ctrl.build
                 }
             }
+            agent { label "${readJSON(text: env.CI_CONFIG_JSON).ci_config.raspi_controller_node}" }
             steps {
                 script {
                     def ciConfig = readJSON text: env.CI_CONFIG_JSON
@@ -137,6 +138,7 @@ pipeline {
                 }
             }
             steps {
+                agent { label "${readJSON(text: env.CI_CONFIG_JSON).ci_config.raspi_device_node}" }
                 script {
                     def ciConfig = readJSON text: env.CI_CONFIG_JSON
                     copyArtifactsEx("dut", ciConfig)
