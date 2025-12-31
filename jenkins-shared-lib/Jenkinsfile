@@ -161,18 +161,30 @@ pipeline {
             }
         }
 
-        stage('Run Certification Tests') {
+        stage('Run DUT Apps') {
             when {
                 expression {
-                    readJSON(text: env.CI_CONFIG_JSON).ci_config.test_run_config.enabled
+                    readJSON(text: env.CI_CONFIG_JSON)
+                        .ci_config.test_run_config.enabled
                 }
             }
             agent { label "${readJSON(text: env.CI_CONFIG_JSON).ci_config.raspi_device_node}" }
             steps {
-                echo "Running Apps on DUT"
-                def workSpace = pwd()
-                echo "Workspace : ${workSpace}"
-                sh """ ls """
+                script {
+                    echo "Running Apps on DUT"
+                    def workSpace = pwd()
+                    echo "Workspace : ${workSpace}"
+                    sh "ls"
+                }
+            }
+        }
+
+        stage('Run Certification Tests') {
+            when {
+                expression {
+                    readJSON(text: env.CI_CONFIG_JSON)
+                        .ci_config.test_run_config.enabled
+                }
             }
             agent { label "${readJSON(text: env.CI_CONFIG_JSON).ci_config.raspi_controller_node}" }
             steps {
@@ -182,6 +194,7 @@ pipeline {
                 }
             }
         }
+
     }
 
     post {
